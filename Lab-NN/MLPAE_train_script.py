@@ -26,7 +26,7 @@ training_dataloader, validation_dataloader = create_flower_dataloaders(batch_siz
 
 
 model = Graph([
-    # TODO: Please implement the MLP autoencoder model here (Both encoder and decoder).
+    
     Linear(3 * IMG_WIDTH * IMG_HEIGHT, 256),
     relu(),
     Linear(256, 128),

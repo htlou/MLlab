@@ -72,8 +72,6 @@ class VarAutoencoder(nn.Module):
         return v: sampled latent vector, dim: (Batch_size, encoding_dim)
         '''
         
-        
-        # TODO: implement the reparameterization trick to sample v
         std = torch.exp(0.5 * log_var)
         eps = torch.randn_like(std)
         z = mu + eps * std
@@ -86,7 +84,7 @@ class VarAutoencoder(nn.Module):
         return mu: mean of the distribution, dim: (Batch_size, encoding_dim)
         return log_var: log of the variance of the distribution, dim: (Batch_size, encoding_dim)
         '''
-        # TODO: implement the forward pass
+
         mu, log_var = self.encoder(x)
         z = self.reparameterize(mu, log_var)
         x_reconstructed = self.decoder(z)
@@ -99,7 +97,6 @@ def VAE_loss_function(outputs, images):
     images: input/original images, dim: (Batch_size, 3, IMG_WIDTH, IMG_HEIGHT)
     return loss: the loss value, dim: (1)
     '''
-    # TODO: implement the loss function for VAE
     x_reconstructed, mu, log_var = outputs
     # Reconstruction loss (e.g., MSE)
     recon_loss = F.mse_loss(x_reconstructed, images, reduction='sum')

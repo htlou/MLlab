@@ -37,10 +37,8 @@ random_latent_vectors = random_latent_vectors.to(next(model.parameters()).device
 # Generate images using the decoder
 with torch.no_grad():
     if args.model == "VAE":
-        # For VAE, we only need to use the decoder part
         random_images = model.decoder(random_latent_vectors)
     else:
-        # For AE, pass the latent vectors through the entire model
         random_images = model.decoder(random_latent_vectors)
 
 
