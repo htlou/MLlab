@@ -10,3 +10,4 @@
  filter=lfs diff=lfs merge=lfs -text
 *.txt filter=lfs diff=lfs merge=lfs -text
  filter=lfs diff=lfs merge=lfs -text
+Lab-NN/log/*.txt filter=lfs diff=lfs merge=lfs -text
