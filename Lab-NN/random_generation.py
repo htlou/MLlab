@@ -25,7 +25,23 @@ model.load_state_dict(torch.load(model_save_path))
 
 # TODO: Generate random images. Please sample 10 latent vectors from a standard normal distribution, and feed them to the decoder to generate images
 # Please ensure that the generated images are tensors named as random_images, with shape (10, 3, 24, 24)
+# Set the model to evaluation mode
+model.eval()
 
+# Generate 10 random latent vectors from a standard normal distribution
+random_latent_vectors = torch.randn(10, ENCODING_DIM)
+
+# Move the latent vectors to the same device as the model
+random_latent_vectors = random_latent_vectors.to(next(model.parameters()).device)
+
+# Generate images using the decoder
+with torch.no_grad():
+    if args.model == "VAE":
+        # For VAE, we only need to use the decoder part
+        random_images = model.decoder(random_latent_vectors)
+    else:
+        # For AE, pass the latent vectors through the entire model
+        random_images = model.decoder(random_latent_vectors)
 
 
 # Save the 10 random images in one figure

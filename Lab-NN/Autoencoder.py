@@ -13,37 +13,30 @@ class Encoder(nn.Module):
         encoding_dim: the dimension of the latent vector produced by the encoder
         '''
         
-        self.encoding_dim = encoding_dim
-        self.fc = None  
-        self.conv_trans1 = nn.ConvTranspose2d(128, 64, kernel_size=3, padding=1)
-        self.conv_trans2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.conv_trans3 = nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1)
+        # Convolutional layers
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1)
+
+        # Linear layer for encoding
+        self.fc = nn.Linear(in_features=128 * (H//4) * (W//4), out_features=encoding_dim)
 
 
-
-
-    def forward(self, v):
+    def forward(self, x):
         '''
         x: input images, dim: (Batch_size, 3, IMG_WIDTH, IMG_HEIGHT)
         return v: latent vector, dim: (Batch_size, encoding_dim)
         '''
         
-        if self.fc is None:
-            # 假设潜在向量应该展开成一个平方形状的特征图
-            feature_size = int((self.encoding_dim // 128) ** 0.5)
-            self.fc = nn.Linear(self.encoding_dim, 128 * feature_size * feature_size).to(v.device)
+        # Apply convolutions
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
 
-        # 从潜在向量生成特征图
-        x = self.fc(v)
-        feature_size = int(x.size(-1) ** 0.5)
-        x = x.view(x.size(0), 128, feature_size, feature_size)
-
-        # 应用转置卷积层和ReLU激活函数
-        x = F.relu(self.conv_trans1(x))
-        x = F.relu(self.conv_trans2(x))
-        x = torch.sigmoid(self.conv_trans3(x))  # 使用sigmoid确保输出在[0, 1]范围内
-
-        return x
+        # Flatten and pass through the linear layer to get the latent vector
+        x = torch.flatten(x, start_dim=1)
+        v = self.fc(x)
+        return v
 
 
 # Define the Decoder
@@ -54,29 +47,23 @@ class Decoder(nn.Module):
         encoding_dim: the dimension of the latent vector produced by the encoder
         '''
         
-        # TODO: implement the decoder
-        self.fc = nn.Linear(encoding_dim, 128 * H/4 * W/4)
+        # Linear layer for decoding
+        self.fc = nn.Linear(in_features=encoding_dim, out_features=128 * (H//4) * (W//4))
 
-        self.conv_trans1 = nn.ConvTranspose2d(128, 64, kernel_size=3, padding=1)
-        self.conv_trans2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.conv_trans3 = nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1)
-
-
-
+        # Transposed convolutional layers
+        self.convtranspose1 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3, stride=1, padding=1)
+        self.convtranspose2 = nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.convtranspose3 = nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=3, stride=2, padding=1, output_padding=1)
 
     def forward(self, v):
-        '''
-        v: latent vector, dim: (Batch_size, encoding_dim)
-        return x: reconstructed images, dim: (Batch_size, 3, IMG_WIDTH, IMG_HEIGHT)
-        '''
-        
-        
-        # TODO: implement the forward pass
-        x = self.fc(v)
-        x = x.view(x.size(0), 128, H//4, W//4)
-        x = F.relu(self.conv_trans1(x))
-        x = F.relu(self.conv_trans2(x))
-        x = torch.sigmoid(self.conv_trans3(x))  
+        # Pass the latent vector through the linear layer and reshape
+        x = F.relu(self.fc(v))
+        x = x.view(-1, 128, H//4, W//4)
+
+        # Apply transposed convolutions
+        x = F.relu(self.convtranspose1(x))
+        x = F.relu(self.convtranspose2(x))
+        x = torch.sigmoid(self.convtranspose3(x))  # Sigmoid activation to ensure output is in [0, 1]
         return x
 
 
